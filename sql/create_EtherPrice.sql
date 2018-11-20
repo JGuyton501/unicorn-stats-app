@@ -6,7 +6,7 @@ CREATE TABLE EtherPrice
 (
     utcdate DATE, --date utc formate
     unixtimestamp INTEGER, --unix time stamp
-    value REAL, --value
+    value DECIMAL, --value
     CONSTRAINT etherprice_pkey PRIMARY KEY (unixtimestamp)
 )
 WITH (
