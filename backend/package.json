@@ -1,5 +1,5 @@
 {
-  "name": "express_tut",
+  "name": "unicorn-stats-app",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,7 +8,7 @@
     "build": "babel server.js --out-dir build",
     "dev-start": "babel-watch server.js"
   },
-  "author": "",
+  "author": "Justin Guyton",
   "license": "ISC",
   "dependencies": {
     "dotenv": "^6.1.0",
