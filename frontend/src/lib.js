@@ -6,30 +6,34 @@ export const GAS_PRICE_DATA = "Gas Price"
 
 export const DATASETS = {
   [TOTAL_ADDRESSES_DATA]: {
-    label: TOTAL_ADDRESSES_DATA,
+    name: TOTAL_ADDRESSES_DATA,
     route: "/api/addresscount",
   },
   [TX_GROWTH_DATA]: {
-    label: "Transaction Growth",
+    name: "Transaction Growth",
     route: "/api/txgrowth",
   },
   [TX_FEE_DATA]: {
-    label: "Transaction Fees",
+    name: "Transaction Fees",
     route: "/api/transactionfee",
   },
   [ETH_PRICE_DATA]: {
-    label: ETH_PRICE_DATA,
+    name: ETH_PRICE_DATA,
     route: "/api/etherprice",
   },
   [GAS_PRICE_DATA]: {
-    label: GAS_PRICE_DATA,
+    name: GAS_PRICE_DATA,
     route: "/api/avggasprice",
   },
 
 }
 
-export const cleanData = (datasetName, data) => {
-  return DATASETS[datasetName]
-    ? data.map(({ unixtimestamp, value }) => [unixtimestamp, value])
-    : null;
+export const cleanData = (data) => {
+  if(Array.isArray(data) && data[0]) {
+    return data.map(({ unixtimestamp, value }) => [unixtimestamp, value]);
+  }
+
+  if(data.data) return cleanData(data.data);
 }
+
+//Todo come up way to augment dataset for performance while preserving trends e.g .filter(n => n % 5 === 0) remore 80% while not compromising trends

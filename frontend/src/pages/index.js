@@ -1,51 +1,71 @@
+/* eslint-disable */
 import React, { Component } from 'react';
 import axios from 'axios';
 
 import Chart from '../components/Chart';
 import Layout from '../components/layout';
+import QuerySelectors from '../components/QuerySelectors';
 
 import { DATASETS, cleanData } from '../lib';
 
+const DEFAULT_STATE = {
+  data: [],
+  queryParams: {
+    selectedDatasets: [],
+    interval: ""
+  }
+}
 export default class IndexPage extends Component { 
 
   constructor(props){
     super(props);
-    this.state = {
-      datasetName: null,
-      currentData: null,
-      allData : [],
-      queryParams: {
-        selectedDatasets: [],
-
-      }
-    }
+    this.state = DEFAULT_STATE
   }
 
-  getEthData = async () => {
-    const datasetOptions = document.getElementById("select-dataset");
-    const datasetName = datasetOptions.options[datasetOptions.selectedIndex].text;
-    const route = DATASETS[datasetName] ? DATASETS[datasetName].route : null;
+  getData = async () => {
+    const {selectedDatasets, interval} = this.state.queryParams;
+    if(selectedDatasets && Array.isArray(selectedDatasets)) {
+     
+      const requests = selectedDatasets.map(s => {
+        const { route, name } = DATASETS[s];
+        return {
+          name,
+          res: axios.get(`http://localhost:3000${route}`)
+        };
+      });
 
-    if(route) {
-      const { data, error } = await axios.get(`http://localhost:3000${route}`);
-      if(!error && data) {
-        const cleanedData = cleanData(datasetName, data.rows);
-        this.setState({
-          datasetName,
-          currentData: cleanedData,
-          allData: {...this.state.allData, [datasetName]: cleanedData}
-        });
-        return cleanedData;
-      }
+      const data = await requests.reduce(async (set, {name, res}) => {
+        const sets = await set; // wait for previous requests to return (instantaneous)
+        const {data, error} = await res; // wait for this res to load
+        return error ? sets : [...sets, {name, data: data.rows}]
+      }, []);
+
+      this.setState({data});
     }
+  }
+  
+  resetData = () => this.setState({...DEFAULT_STATE});
+  
+  toggleDataset = (datasetName) => {
+    const { queryParams } = this.state;
+    const currentSets = [...queryParams.selectedDatasets];
+    const setIndex = currentSets.indexOf(datasetName);
 
-    this.setState({ currentData: dataCache })
-    return dataCache;
+    const selectedDatasets = setIndex > -1
+      ? currentSets.filter(name => name !== datasetName)
+      : [...currentSets, datasetName];
+
+    this.setState({queryParams: {...queryParams, selectedDatasets}});
+  };
+
+  updateQuery = (update) => {
+    const queryParams = {...this.state.queryParams, ...update};
+    this.setState({queryParams});
   }
 
-
-
+  
   render () {
+    const { queryParams, data } = this.state
     return (
       <Layout>
         <h3>Turning ETH normies into ETH stat warriors!</h3>  
@@ -57,19 +77,26 @@ export default class IndexPage extends Component {
                 
         <br />
         <br />
-                
-        {/* datasets should be radio buttons so can overlay multiple datasets  */}
-        <select id="select-dataset">
-          {Object.keys(DATASETS).map((set) => 
-            <option key={set} value={set}> {set} </option>)}
-        </select>
         
-        <button onClick={this.getEthData}> Load Data </button>
-        
-        <Chart
-          data={this.state.currentData}
-          datasetName={this.state.datasetName}
-        />
+        {Object.keys(DATASETS).map((set) => 
+          <React.Fragment key={set}>
+            <label htmlFor={set}> {set} </label>
+            <input
+              type="radio"
+              checked={queryParams.selectedDatasets.filter(n => n === set).length > 0}
+              name={set}
+              value={set}
+              onClick={() => this.toggleDataset(set)}
+            /> 
+          </React.Fragment>)}
+
+        {/* <QuerySelectors /> */}
+
+        <button onClick={this.getData}> Load Data </button>
+        <button onClick={this.resetData}> Reset Graph </button>
+
+        <Chart data={data} />
+
       </Layout>
     );
   }
@@ -78,47 +105,3 @@ export default class IndexPage extends Component {
 
 
 
-// getData = async (queryParams) => {
-//   const {datasetNames, interval} = queryParams || this.state.queryParams;
-
-//   // instead wil be array to iter from radio buttons
-//   const datasetOptions = document.getElementById("select-dataset");
-//   const datasetName = datasetOptions.options[datasetOptions.selectedIndex].text;
-
-//   const route = DATASETS[datasetName] ? DATASETS[datasetName].route : null;
-
-//   const dataCache = this.state.allData[datasetName];
-
-//   console.log('route', route, datasetName, DATASETS[datasetName]);
-//   if(!dataCache && route) {
-//     // const {data, error} = await axios.get(`http://localhost:3000/api/{addresscount}`);
-//     const {data, error} = await axios.get(`http://localhost:3000${route}`);
-//     if(!error && data) {
-//       const cleanedData = cleanData(datasetName, data.rows);
-//       this.setState({
-//         datasetName,
-//         currentData: cleanedData,
-//         allData: {...this.state.allData, [datasetName]: cleanedData}
-//       });
-//       return cleanedData;
-//     }
-//   }
-
-//   this.setState({currentData: dataCache})
-//   return dataCache;
-// }
-
-// reset = () => this.setState({
-//   currentData: null,
-//   datasetName: null,
-//   queryParams: null
-// });
-
-// renderQuerySelectors = () => {
-
-// };
-
-// updateQuery = ({field, value}) => {
-//   const queryParams = {...this.state.queryParams, [field]: value}
-//   this.setState({queryParams});
-// }
