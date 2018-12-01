@@ -1,41 +1,48 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import axios from 'axios';
 
 import Chart from '../components/Chart';
+import Layout from '../components/layout';
 
-import Layout from '../components/layout'
+import { DATASETS, cleanData } from '../lib';
 
 export default class IndexPage extends Component { 
 
   constructor(props){
     super(props);
     this.state = {
+      datasetName: null,
       currentData: null,
-      allData : []
+      allData : [],
+      queryParams: {
+        selectedDatasets: [],
+
+      }
     }
   }
 
-  getEthData = async (datasetName) => {
+  getEthData = async () => {
     const datasetOptions = document.getElementById("select-dataset");
-    const selectedDataset = datasetName || datasetOptions.options[datasetOptions.selectedIndex].value;
-    const dataCache = this.state.allData[selectedDataset];
+    const datasetName = datasetOptions.options[datasetOptions.selectedIndex].text;
+    const route = DATASETS[datasetName] ? DATASETS[datasetName].route : null;
 
-    console.log('get EthData', selectedDataset, dataCache);
-    if(!dataCache) {
-      const newData = await axios.get(`http://localhost:3000/api/addresscount`);
-      console.log('newData', newData, newData.body, );
-      if(!newData.error) {
+    if(route) {
+      const { data, error } = await axios.get(`http://localhost:3000${route}`);
+      if(!error && data) {
+        const cleanedData = cleanData(datasetName, data.rows);
         this.setState({
-          currentData: newData,
-          allData: {...this.state.allData, [selectedDataset]: newData}
+          datasetName,
+          currentData: cleanedData,
+          allData: {...this.state.allData, [datasetName]: cleanedData}
         });
-        return newData;
+        return cleanedData;
       }
     }
 
-    this.setState({currentData: dataCache})
+    this.setState({ currentData: dataCache })
     return dataCache;
   }
+
 
 
   render () {
@@ -51,16 +58,67 @@ export default class IndexPage extends Component {
         <br />
         <br />
                 
-        <select id="select-dataset"> 
-          <option> Tx Price </option>
-          <option> Gas Costs </option>
-          <option> Total Addresses </option>
+        {/* datasets should be radio buttons so can overlay multiple datasets  */}
+        <select id="select-dataset">
+          {Object.keys(DATASETS).map((set) => 
+            <option key={set} value={set}> {set} </option>)}
         </select>
-
-        <button onClick={this.getEthData}> Load Dataset </button>
         
-        <Chart />
+        <button onClick={this.getEthData}> Load Data </button>
+        
+        <Chart
+          data={this.state.currentData}
+          datasetName={this.state.datasetName}
+        />
       </Layout>
     );
   }
 }
+
+
+
+
+// getData = async (queryParams) => {
+//   const {datasetNames, interval} = queryParams || this.state.queryParams;
+
+//   // instead wil be array to iter from radio buttons
+//   const datasetOptions = document.getElementById("select-dataset");
+//   const datasetName = datasetOptions.options[datasetOptions.selectedIndex].text;
+
+//   const route = DATASETS[datasetName] ? DATASETS[datasetName].route : null;
+
+//   const dataCache = this.state.allData[datasetName];
+
+//   console.log('route', route, datasetName, DATASETS[datasetName]);
+//   if(!dataCache && route) {
+//     // const {data, error} = await axios.get(`http://localhost:3000/api/{addresscount}`);
+//     const {data, error} = await axios.get(`http://localhost:3000${route}`);
+//     if(!error && data) {
+//       const cleanedData = cleanData(datasetName, data.rows);
+//       this.setState({
+//         datasetName,
+//         currentData: cleanedData,
+//         allData: {...this.state.allData, [datasetName]: cleanedData}
+//       });
+//       return cleanedData;
+//     }
+//   }
+
+//   this.setState({currentData: dataCache})
+//   return dataCache;
+// }
+
+// reset = () => this.setState({
+//   currentData: null,
+//   datasetName: null,
+//   queryParams: null
+// });
+
+// renderQuerySelectors = () => {
+
+// };
+
+// updateQuery = ({field, value}) => {
+//   const queryParams = {...this.state.queryParams, [field]: value}
+//   this.setState({queryParams});
+// }
