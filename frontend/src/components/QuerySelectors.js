@@ -15,7 +15,6 @@ export default ({ queryParams, updateQuery }) => {
 
   const renderQueries = () => Object.keys(queries).map((q) => {
     const {type, options} = queries[q];
-    // TODO use queryParams to highlight selected options or display in a small dashboard
     if(type === "select") {
       return (
         <select key={q} id={`query-select-${q}-container`}>
@@ -28,19 +27,19 @@ export default ({ queryParams, updateQuery }) => {
               {val}
             </option>)}
         </select>
-      )
+      );
     }
 
     if(type === "radio") {
-        return (
-          <div key={q} id={`query-select-${q}-container`}>
-          {options.map((val) => 
-            <React.Fragment key={val}>
-              <label htmlFor={val}> {val} </label>
-              <input className={`query-select-${q}`} type="radio" name={val} value={val} />
-            </React.Fragment>)}
-          </div> 
-        )
+      return (
+        <div key={q} id={`query-select-${q}-container`}>
+        {options.map((val) => 
+          <React.Fragment key={val}>
+            <label htmlFor={val}> {val} </label>
+            <input className={`query-select-${q}`} type="radio" name={val} value={val} />
+          </React.Fragment>)}
+        </div> 
+      );
     }
   })
 
